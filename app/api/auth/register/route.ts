@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { connectToDatabase } from '@/lib/db'
 import User from '@/lib/models/User'
 import bcrypt from 'bcryptjs'
-import { signToken, sanitizeInput, validateEmail, validatePassword } from '@/lib/auth'
+import { signToken, sanitizeInput, validateEmail, validatePassword } from '@/lib/auth'      
 import { cookies } from 'next/headers'
 
 export async function POST(request: NextRequest) {
@@ -33,18 +33,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email already registered' }, { status: 409 })
     }
 
-    // **Hash the password**
-    const hashedPassword = await bcrypt.hash(password, 12) // stronger hash
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 12)
 
     // Create user in DB
     const user = await User.create({
       email: sanitizedEmail,
-      password: hashedPassword, // This will appear in your DB
+      password: hashedPassword,
       name: sanitizedName,
+      role: 'user', // default role, important for JWT
     })
 
-    // Generate JWT token
-    const token = await signToken({ userId: user._id.toString(), email: user.email })
+    // Generate JWT token with role included
+    const token = await signToken({ 
+      userId: user._id.toString(), 
+      email: user.email, 
+      role: user.role 
+    })
 
     // Set HTTP-only cookie
     const cookieStore = await cookies()
@@ -56,10 +61,10 @@ export async function POST(request: NextRequest) {
       path: '/',
     })
 
-    // ✅ Return user info (without original password)
+    // Return user info (without original password)
     return NextResponse.json({
       success: true,
-      user: { id: user._id, email: user.email, name: user.name, hashedPassword: user.password }
+      user: { id: user._id, email: user.email, name: user.name, hashedPassword: user.password, role: user.role }
     })
   } catch (error) {
     console.error('Registration error:', error)
