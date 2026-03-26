@@ -1,12 +1,11 @@
 import mongoose from "mongoose";
 
-// Get env variable
+// ✅ Ensure MONGODB_URI is defined
 const MONGODB_URI = process.env.MONGODB_URI;
 
-// ✅ Check for undefined
 if (!MONGODB_URI) {
   throw new Error(
-    "Please define the MONGODB_URI environment variable in .env.local or Vercel dashboard"
+    "Please define the MONGODB_URI environment variable in .env.local or Vercel dashboard",
   );
 }
 
@@ -16,11 +15,13 @@ interface MongooseCache {
   promise: Promise<typeof mongoose> | null;
 }
 
-// Declare global cache
+// Declare a global variable to cache connection in dev
 declare global {
+  // eslint-disable-next-line no-var
   var mongoose: MongooseCache | undefined;
 }
 
+// Use global cached connection if available
 let cached: MongooseCache = global.mongoose || { conn: null, promise: null };
 if (!global.mongoose) global.mongoose = cached;
 
@@ -30,15 +31,14 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
 
   if (!cached.promise) {
     const opts = { bufferCommands: false };
-    // ✅ Use non-null assertion to tell TypeScript this is definitely a string
-    cached.promise = mongoose.connect(MONGODB_URI!, opts);
+    cached.promise = mongoose.connect(MONGODB_URI as string, opts);
   }
 
   try {
     cached.conn = await cached.promise;
-  } catch (e) {
+  } catch (error) {
     cached.promise = null;
-    throw e;
+    throw error;
   }
 
   return cached.conn;
