@@ -1,20 +1,22 @@
 import mongoose from "mongoose";
 
-// ✅ د چاپیریال متغیر
+// Get env variable
 const MONGODB_URI = process.env.MONGODB_URI;
+
+// ✅ Check for undefined
 if (!MONGODB_URI) {
   throw new Error(
-    "مهرباني وکړئ MONGODB_URI په .env.local یا Vercel dashboard کې تعریف کړئ"
+    "Please define the MONGODB_URI environment variable in .env.local or Vercel dashboard"
   );
 }
 
-// ✅ د cached اړیکې لپاره انترفیس
+// Interface for cached connection
 interface MongooseCache {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
 }
 
-// ✅ ګلوبل cached جوړول، څو په dev کې څو ځلې DB نه خلاص شي
+// Declare global cache
 declare global {
   var mongoose: MongooseCache | undefined;
 }
@@ -22,13 +24,14 @@ declare global {
 let cached: MongooseCache = global.mongoose || { conn: null, promise: null };
 if (!global.mongoose) global.mongoose = cached;
 
-// ✅ DB ته د نښلیدو فنکشن
+// Connect function
 export async function connectToDatabase(): Promise<typeof mongoose> {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
     const opts = { bufferCommands: false };
-    cached.promise = mongoose.connect(MONGODB_URI, opts);
+    // ✅ Use non-null assertion to tell TypeScript this is definitely a string
+    cached.promise = mongoose.connect(MONGODB_URI!, opts);
   }
 
   try {
