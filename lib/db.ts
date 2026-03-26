@@ -6,7 +6,7 @@ const MONGODB_URI: string = process.env.MONGODB_URI || "";
 // ❌ Check for undefined
 if (!MONGODB_URI) {
   throw new Error(
-    "Please define the MONGODB_URI environment variable in .env.local or Vercel dashboard"
+    "Please define the MONGODB_URI environment variable in .env.local or Vercel dashboard",
   );
 }
 
