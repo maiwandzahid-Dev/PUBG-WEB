@@ -1,17 +1,24 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI;
+// Environment variable
+const MONGODB_URI: string = process.env.MONGODB_URI || "";
 
+// ❌ Check for undefined
 if (!MONGODB_URI) {
-  throw new Error("Please define MONGODB_URI in .env.local");
+  throw new Error(
+    "Please define the MONGODB_URI environment variable in .env.local or Vercel dashboard"
+  );
 }
 
+// Interface for cached connection
 interface MongooseCache {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
 }
 
+// Declare global cache to avoid multiple connections in dev
 declare global {
+  // eslint-disable-next-line no-var
   var mongoose: MongooseCache | undefined;
 }
 
@@ -21,7 +28,8 @@ if (!global.mongoose) {
   global.mongoose = cached;
 }
 
-export async function connectToDatabase() {
+// Connect function
+export async function connectToDatabase(): Promise<typeof mongoose> {
   if (cached.conn) {
     return cached.conn;
   }
