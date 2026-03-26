@@ -1,38 +1,30 @@
 import mongoose from "mongoose";
 
-// Environment variable
-const MONGODB_URI: string = process.env.MONGODB_URI || "";
-
-// ❌ Check for undefined
+// ✅ د چاپیریال متغیر
+const MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) {
   throw new Error(
-    "Please define the MONGODB_URI environment variable in .env.local or Vercel dashboard",
+    "مهرباني وکړئ MONGODB_URI په .env.local یا Vercel dashboard کې تعریف کړئ"
   );
 }
 
-// Interface for cached connection
+// ✅ د cached اړیکې لپاره انترفیس
 interface MongooseCache {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
 }
 
-// Declare global cache to avoid multiple connections in dev
+// ✅ ګلوبل cached جوړول، څو په dev کې څو ځلې DB نه خلاص شي
 declare global {
-  // eslint-disable-next-line no-var
   var mongoose: MongooseCache | undefined;
 }
 
 let cached: MongooseCache = global.mongoose || { conn: null, promise: null };
+if (!global.mongoose) global.mongoose = cached;
 
-if (!global.mongoose) {
-  global.mongoose = cached;
-}
-
-// Connect function
+// ✅ DB ته د نښلیدو فنکشن
 export async function connectToDatabase(): Promise<typeof mongoose> {
-  if (cached.conn) {
-    return cached.conn;
-  }
+  if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
     const opts = { bufferCommands: false };
